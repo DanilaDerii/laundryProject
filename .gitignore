@@ -1,0 +1,15 @@
+# Node / Next
+node_modules/
+.next/
+out/
+dist/
+.cache/
+.env*
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
