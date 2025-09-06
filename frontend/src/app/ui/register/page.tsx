@@ -1,8 +1,8 @@
-// frontend/src/app/register/page.tsx
+// frontend/src/app/ui/register/page.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
-import { setUser } from "../../lib/session";
+import { setUser } from "../../../lib/session";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -34,11 +34,11 @@ export default function RegisterPage() {
         return;
       }
 
-      // Save locally for navbar badge
-      setUser({ name: data.name, email: data.email, member: data.member });
-      router.push("/");
+      // Save locally (now includes id)
+      setUser({ id: data.id, name: data.name, email: data.email, member: data.member });
+      router.push("/ui/orders");
       router.refresh();
-    } catch (e) {
+    } catch {
       setError("Network error");
     } finally {
       setLoading(false);
@@ -94,7 +94,7 @@ export default function RegisterPage() {
       {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
       <p className="text-sm mt-3">
         Already have an account?{" "}
-        <Link className="underline" href="/login">
+        <Link className="underline" href="/ui/login">
           Login
         </Link>
       </p>

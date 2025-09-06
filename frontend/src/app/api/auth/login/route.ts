@@ -1,50 +1,44 @@
-// frontend/src/app/api/auth/login/route.ts
 import { NextResponse } from "next/server";
-
-// IMPORTANT: path depth must match your register route.
-// Your register used "../../../../../../backend/lib"
 import { db } from "../../../../../../backend/lib";
 
-type User = {
+type AnyUser = {
   id: string;
   name: string;
   email: string;
-  member: boolean;
-  password?: string;   // demo only
-  createdAt: string;
+  isMember?: boolean;
+  member?: boolean;
+  password?: string;
 };
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const email = String(body?.email ?? "").trim().toLowerCase();
-    const password = String(body?.password ?? ""); // demo only
+    const password = String(body?.password ?? ""); // demo
 
     if (!email) {
       return NextResponse.json({ error: "Email is required." }, { status: 400 });
     }
 
-    // Ensure users array exists
-    // @ts-ignore
-    db.users = db.users ?? [];
+    // Prefer official user list if available
+    const users: AnyUser[] =
+      (typeof (db as any).listUsers === "function" ? (db as any).listUsers() : ((db as any).users ?? []));
 
-    // @ts-ignore
-    const user: User | undefined = db.users.find((u: User) => u.email === email);
+    let user = users.find(u => u.email === email);
+
     if (!user) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
-    // Super-dumb password check (demo)
-    // - If the stored password is empty/undefined, allow login without a password (seeded or old users)
-    // - If stored password exists, require exact match
-    const stored = user.password ?? "";
-    const needsPassword = stored.length > 0;
-    if (needsPassword && stored !== password) {
+    // Demo password rule: only enforce if a password was stored
+    if ((user.password ?? "").length > 0 && user.password !== password) {
       return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
     }
 
-    const { password: _pw, ...safe } = user;
-    return NextResponse.json(safe, { status: 200 });
+    return NextResponse.json(
+      { id: user.id, name: user.name, email: user.email, member: Boolean(user.isMember ?? user.member) },
+      { status: 200 }
+    );
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }

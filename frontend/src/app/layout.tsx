@@ -15,9 +15,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="border-b bg-white">
           <nav className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/" className="font-semibold text-black">Laundry</Link>
-              <Link href="/orders/new" className="hover:underline text-black">Create Order</Link>
-              <Link href="/orders" className="hover:underline text-black">My Orders</Link>
+              <Link href="/ui/orders" className="font-semibold text-black">Laundry</Link>
+              <Link href="/ui/orders/new" className="hover:underline text-black">Create Order</Link>
+              <Link href="/ui/orders" className="hover:underline text-black">My Orders</Link>
             </div>
             <div className="flex items-center gap-3">
               <ClientUserBadge />

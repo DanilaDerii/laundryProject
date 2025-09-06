@@ -25,3 +25,5 @@ if (!globalThis.__LAUNDRY_SEEDED__) {
 
 export { db };
 export * from "./types";
+export * from "./slots"; // <-- add this
+export * from "./pricing";

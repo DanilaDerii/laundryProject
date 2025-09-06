@@ -1,18 +1,12 @@
-// frontend/src/app/api/auth/register/route.ts
 import { NextResponse } from "next/server";
-
-// IMPORTANT: match exactly how you import db in /api/orders/route.ts
-// If your orders route does: import { db } from "../../../../../backend/lib"
-// then use the same here.
 import { db } from "../../../../../../backend/lib";
 
-type User = {
+type AnyUser = {
   id: string;
   name: string;
   email: string;
-  member: boolean;
-  password?: string;
-  createdAt: string;
+  isMember?: boolean;
+  member?: boolean;
 };
 
 export async function POST(req: Request) {
@@ -21,37 +15,31 @@ export async function POST(req: Request) {
     const name = String(body?.name ?? "").trim();
     const email = String(body?.email ?? "").trim().toLowerCase();
     const member = Boolean(body?.member);
-    const password = String(body?.password ?? ""); // demo only
 
     if (!name || !email) {
       return NextResponse.json({ error: "Name and email are required." }, { status: 400 });
     }
 
-    // Ensure users array exists
-    // @ts-ignore
-    db.users = db.users ?? [];
+    // If the store exposes listUsers, use it to check duplicates; else fall back to db.users
+    const users: AnyUser[] =
+      (typeof (db as any).listUsers === "function" ? (db as any).listUsers() : ((db as any).users ?? []));
 
-    // @ts-ignore
-    const exists: User | undefined = db.users.find((u: User) => u.email === email);
-    if (exists) {
+    if (users.some(u => u.email === email)) {
       return NextResponse.json({ error: "User already exists." }, { status: 409 });
     }
 
-    const now = new Date().toISOString();
-    const user: User = {
-      id: email, // keep simple
-      name,
-      email,
-      member,
-      password, // plain text, demo only
-      createdAt: now,
-    };
+    // Let the store generate the id (do NOT pass id here)
+    const created: AnyUser = (db as any).createUser
+      ? (db as any).createUser({ name, email, isMember: member })
+      : // fallback for very old store shape
+        ((db as any).users = (db as any).users ?? [],
+         (db as any).users.push({ id: email, name, email, isMember: member, member }),
+         { id: email, name, email, isMember: member });
 
-    // @ts-ignore
-    db.users.push(user);
-
-    const { password: _pw, ...safe } = user;
-    return NextResponse.json(safe, { status: 201 });
+    return NextResponse.json(
+      { id: created.id, name: created.name, email: created.email, member: Boolean(created.isMember ?? created.member) },
+      { status: 201 }
+    );
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }

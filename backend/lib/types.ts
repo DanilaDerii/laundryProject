@@ -14,8 +14,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  passwordHash: string; // MVP only
-  isMember: boolean;    // 30% discount flag
+  passwordHash: string; 
+  isMember: boolean;   
 }
 
 export interface Order {
@@ -28,9 +28,9 @@ export interface Order {
   pickupSlot: string;    // ISO; 15-min slot start
   deliverySlot: string;  // ISO; 15-min slot start
 
-  weightKg?: number;     // optional until measured
+  weightKg?: number;     
   tier: Tier;
-  price: number;         // after membership discount
+  price: number;         
   paid: boolean;         // must be true to exist as PLACED
   status: OrderStatus;
 
