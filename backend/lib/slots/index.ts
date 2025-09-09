@@ -1,4 +1,4 @@
-// backend/lib/slots/index.ts
+// Re-exports for convenience
 export * from "./constants";
 export * from "./time";
 export * from "./occupancy";

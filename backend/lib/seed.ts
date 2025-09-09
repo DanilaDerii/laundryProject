@@ -2,24 +2,14 @@
 // Idempotent seeding using your existing store API.
 
 import { db as defaultDb } from "./store";
-import type { Tier } from "./types";
+import type { Tier, ISODateTime } from "./types";
+import { computePrice } from "./pricing";
 
-// ---- Pricing rules ----
-export const TIER_RATES: Record<Tier, number> = {
-  SMALL: 200,
-  MEDIUM: 300,
-  LARGE: 400,
-};
-
-function computePrice(tier: Tier, isMember: boolean): number {
-  const base = TIER_RATES[tier];
-  return isMember ? Math.round(base * 0.7) : base;
-}
-
-// Helper: ISO time offset from now (minutes)
-function slotAtOffsetMinutes(offset: number): string {
+// Helper: ISO time offset from now (minutes), zero seconds/ms for stability
+function slotAtOffsetMinutes(offset: number): ISODateTime {
   const d = new Date();
-  d.setMinutes(d.getMinutes() + offset, 0, 0);
+  d.setMinutes(d.getMinutes() + offset);
+  d.setSeconds(0, 0);
   return d.toISOString();
 }
 
@@ -52,7 +42,7 @@ export function seed(db = defaultDb) {
 
       db.createOrder({
         customerId: demo.id,
-        customerName: demo.name,
+        customerName: demo.name, // backend will enforce consistency later
         phone: "+66-0000-0000",
         address: "123 Test Rd, Bangkok",
         pickupSlot: pickup,
@@ -60,7 +50,7 @@ export function seed(db = defaultDb) {
         weightKg: undefined,
         tier,
         price: computePrice(tier, demo.isMember),
-        paid: true,
+        paid: true,              // seed an already-paid order
         status: "PLACED",
       });
     }

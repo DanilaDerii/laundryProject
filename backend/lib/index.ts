@@ -3,6 +3,7 @@
 
 import { db as rawDb } from "./store";
 import { seed } from "./seed";
+import type { OrderStatus } from "./types";
 
 type DBType = typeof rawDb;
 
@@ -23,7 +24,33 @@ if (!globalThis.__LAUNDRY_SEEDED__) {
   }
 }
 
+// Core DB instance
 export { db };
+
+// Domain/types/utilities
 export * from "./types";
-export * from "./slots"; // <-- add this
+export * from "./slots";
 export * from "./pricing";
+
+// Convenience re-exports of key helpers (so routes don’t import store.ts directly)
+export const {
+  listUsers,
+  getUser,
+  findUserByEmail,
+  createUser,
+  listOrders,
+  listOrdersByCustomer,
+  getOrder,
+  createOrder,
+  updateOrder,
+  deleteOrder,
+  canAdvanceStatus,
+  advanceOrderStatus,
+  canEditOrCancel,
+  recordPayment,
+  getPaymentByToken,
+  verifyAndConsumePayment,
+  resetForTests,
+} = db;
+
+export type { OrderStatus };

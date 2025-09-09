@@ -1,9 +1,14 @@
-// frontend/src/app/api/orders/route.ts
 import { NextResponse } from "next/server";
 import { db, validateSlot, computePrice } from "backend/lib";
 
-export async function GET() {
-  const orders = db.listOrders();
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const customerId = searchParams.get("customerId");
+
+  const orders = customerId
+    ? db.listOrdersByCustomer(String(customerId))
+    : db.listOrders(); // fallback until real auth
+
   return NextResponse.json({ orders }, { status: 200 });
 }
 
@@ -13,57 +18,55 @@ export async function POST(request: Request) {
 
     const {
       customerId,
-      customerName,
       phone,
       address,
-      pickupSlot,   // "YYYY-MM-DDTHH:mm" local preferred
+      pickupSlot,
       deliverySlot,
-      tier,         // "SMALL" | "MEDIUM" | "LARGE"
-      paid = true,  // temp until /api/payment
-      weightKg,     // optional; mapper later
+      tier,
+      weightKg,
+      paymentToken, // REQUIRED
     } = body || {};
 
-    for (const k of ["customerId","customerName","phone","address","pickupSlot","deliverySlot","tier"] as const) {
+    for (const k of ["customerId","phone","address","pickupSlot","deliverySlot","tier","paymentToken"] as const) {
       if (!body?.[k]) {
-        return NextResponse.json({ error: `Missing required field: ${k}` }, { status: 400 });
+        return NextResponse.json({ ok: false, error: `Missing required field: ${k}` }, { status: 400 });
       }
     }
 
     const user = db.getUser(String(customerId));
-    if (!user) {
-      return NextResponse.json({ error: "customerId not found" }, { status: 404 });
-    }
+    if (!user) return NextResponse.json({ ok: false, error: "customerId not found" }, { status: 404 });
 
-    // Enforce slot rules
-    const existing = db.listOrders();
-    const check = validateSlot(existing, String(pickupSlot));
+    const check = validateSlot(db.listOrders(), String(pickupSlot));
     if (!check.ok) {
+      return NextResponse.json({ ok: false, reason: check.reason, suggestion: check.suggestion }, { status: 400 });
+    }
+    const normalizedPickup = check.normalizedSlot;
+
+    const price = computePrice(tier, user.isMember);
+    const ok = db.verifyAndConsumePayment(String(paymentToken), String(customerId), price);
+    if (!ok) {
       return NextResponse.json(
-        { ok: false, reason: check.reason, suggestion: check.suggestion },
-        { status: 400 }
+        { ok: false, error: "Payment required or mismatch (invalid token / wrong amount / reused token)" },
+        { status: 402 }
       );
     }
-    const normalizedPickup = check.normalizedSlot; // local ISO
-
-    // Pricing via shared function
-    const price = computePrice(tier, user.isMember);
 
     const created = db.createOrder({
       customerId: String(customerId),
-      customerName,
-      phone,
-      address,
+      customerName: user.name,
+      phone: String(phone),
+      address: String(address),
       pickupSlot: normalizedPickup,
-      deliverySlot,
+      deliverySlot: String(deliverySlot),
       weightKg,
       tier,
       price,
-      paid: !!paid,
-      status: paid ? "PLACED" : "FAILED_PICKUP",
+      paid: true,
+      status: "PLACED",
     });
 
-    return NextResponse.json(created, { status: 201 });
+    return NextResponse.json({ ok: true, order: created }, { status: 201 });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: e?.message || "Invalid JSON" }, { status: 400 });
   }
 }

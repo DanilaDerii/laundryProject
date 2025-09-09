@@ -1,6 +1,6 @@
-// backend/lib/slots/time.ts
 import { SLOT_MINUTES, OPEN_HOUR, CLOSE_HOUR, CLOSED_WEEKDAY } from "./constants";
 
+// ---------- Basics ----------
 export function clone(d: Date) { return new Date(d.getTime()); }
 
 export function isWednesday(d: Date) {
@@ -30,7 +30,7 @@ export function addMinutes(d: Date, mins: number) {
   return out;
 }
 
-// Start must be >= 09:00 and end (=start+15m) must be <= 16:00
+// Start must be >= 09:00 and < 16:00 (15:45 is last valid start)
 export function isWithinBusinessHours(slotStart: Date) {
   const h = slotStart.getHours();
   if (h < OPEN_HOUR || h >= CLOSE_HOUR) return false;
@@ -47,22 +47,34 @@ export function toIsoLocal(d: Date) {
   return `${y}-${m}-${day}T${hh}:${mm}`;
 }
 
-// First next valid business slot after given date-time
-// replace the existing nextOpenSlotAfter with:
-export function nextOpenSlotAfter(d: Date) {
-  let cur = addMinutes(roundDownToSlot(d), SLOT_MINUTES);
-  // scan up to ~2 weeks
+// ---------- Next open slot ----------
+
+function firstBusinessMinuteOfNextDay(from: Date) {
+  const nextDay = new Date(from);
+  nextDay.setDate(nextDay.getDate() + 1);
+  nextDay.setHours(OPEN_HOUR, 0, 0, 0);
+  return nextDay;
+}
+
+/**
+ * First valid business slot strictly AFTER the given time.
+ * - Aligns to grid, then moves one slot forward
+ * - Skips closed days (Wednesday) via isBusinessDay
+ * - Clamps past 16:00 to next day 09:00
+ * Returns Date or null if nothing found within ~2 weeks (safety cap).
+ */
+export function nextOpenSlotAfter(d: Date): Date | null {
+  let cur = addMinutes(roundDownToSlot(d), SLOT_MINUTES); // strictly after 'd'
+
+  // Safety cap: search up to 14 days * 96 slots/day
   for (let i = 0; i < 96 * 14; i++) {
-    if (isBusinessDay(cur) && isWithinBusinessHours(cur)) return cur;
-    cur = addMinutes(cur, SLOT_MINUTES);
-    // If we rolled past closing, jump to NEXT day's 09:00
     if (cur.getHours() >= CLOSE_HOUR) {
-      const nextDay = new Date(cur);
-      nextDay.setDate(nextDay.getDate() + 1);
-      nextDay.setHours(OPEN_HOUR, 0, 0, 0);
-      cur = nextDay;
+      cur = firstBusinessMinuteOfNextDay(cur);
     }
+    if (isBusinessDay(cur) && isWithinBusinessHours(cur)) {
+      return cur;
+    }
+    cur = addMinutes(cur, SLOT_MINUTES);
   }
   return null;
 }
-
