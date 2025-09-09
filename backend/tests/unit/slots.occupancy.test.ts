@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { hasSlotConflict, nextFreeSlot } from "../lib/slots/occupancy";
-import type { Order } from "../lib/types";
+import { hasSlotConflict, nextFreeSlot } from "@lib/slots/occupancy";
+import type { Order } from "@lib/types";
 
 // helper to make ISO quickly
 function iso(y: number, m: number, d: number, h: number, min: number) {

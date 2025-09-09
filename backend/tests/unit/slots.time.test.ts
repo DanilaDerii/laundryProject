@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { roundDownToSlot, isAlignedToSlot, nextOpenSlotAfter } from "../lib/slots/time";
-import { CLOSED_WEEKDAY, OPEN_HOUR, CLOSE_HOUR } from "../lib/slots/constants";
+import { roundDownToSlot, isAlignedToSlot, nextOpenSlotAfter } from "@lib/slots/time";
+import { CLOSED_WEEKDAY, OPEN_HOUR, CLOSE_HOUR } from "@lib/slots/constants";
 
 // Helper: make a local Date (avoids DST/UTC surprises)
 function d(y: number, m: number, day: number, h: number, min: number) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computePrice } from "../lib/pricing";
+import { computePrice } from "@lib/pricing";
 
 // Group of tests
 describe("pricing", () => {

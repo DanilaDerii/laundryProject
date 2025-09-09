@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { db } from "../lib/store";
+import { db } from "@lib/store";
 
 describe("store CRUD", () => {
   beforeEach(() => {

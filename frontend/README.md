@@ -34,3 +34,24 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+
+
+## Running Tests
+
+We use [Vitest](https://vitest.dev/) for automated tests.
+
+### Backend (lib tests)
+```bash
+cd backend
+pnpm test        # runs pricing, slots, store tests
+pnpm test:watch  # watch mode
+
+
+
+
+cd frontend
+pnpm test        # runs API tests (health, payment, orders)
+pnpm test:watch  # watch mode

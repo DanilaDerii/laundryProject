@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { validateSlot, listAvailableSlotsForDate } from "../lib/slots/validate";
-import { OPEN_HOUR } from "../lib/slots/constants";
-import type { Order } from "../lib/types";
+import { validateSlot, listAvailableSlotsForDate } from "@lib/slots/validate";
+import { OPEN_HOUR } from "@lib/slots/constants";
+import type { Order } from "@lib/types";
 
 // tiny helper to build ISO local like "YYYY-MM-DDTHH:MM" via Date -> toISOString slice
 function isoLocal(y: number, m: number, d: number, h: number, min: number) {
