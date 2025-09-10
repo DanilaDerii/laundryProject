@@ -11,28 +11,32 @@ describe("/api/orders/[id] PUT (tier change requires payment)", () => {
   beforeEach(() => db.resetForTests());
 
   it("rejects tier change without paymentToken (402)", async () => {
-    // Create user + order with FUTURE pickup (to allow edits)
-    const u = db.createUser({ name: "U", email: "u@test", passwordHash: "x", isMember: true }); // member
+    // Member user; create an order whose weight maps to the TARGET tier (MEDIUM)
+    const u = db.createUser({ name: "U", email: "u@test", passwordHash: "x", isMember: true });
     const futurePickup = isoLocalShort(2099, 1, 1, 9, 0);
+
+    // NOTE: weightKg = 10 -> MEDIUM; current tier is SMALL to force a change on PUT.
     const o = db.createOrder({
       customerId: u.id,
       customerName: u.name,
       phone: "111",
       address: "Addr",
-      tier: "SMALL",          // 200 base → 140 member
-      weightKg: 1,
+      tier: "SMALL",                 // current tier (intentionally mismatched with weight)
+      weightKg: 10,                  // maps to MEDIUM (5 < w <= 15)
       pickupSlot: futurePickup,
       deliverySlot: isoLocalShort(2099, 1, 1, 15, 0),
-      price: 140,
+      price: 140,                    // SMALL member price (seeded; not rechecked here)
       paid: true,
       status: "PLACED",
     });
 
-    // Try to change to MEDIUM without token
+    // Attempt to change to MEDIUM WITHOUT paymentToken.
+    // Because weight (10) maps to MEDIUM, the server won't 400 on mismatch;
+    // it will hit the payment check and return 402.
     const req = new Request(`http://local/api/orders/${o.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tier: "MEDIUM" }), // missing paymentToken
+      body: JSON.stringify({ tier: "MEDIUM" }),
     });
     const res = await putOrder(req, { params: { id: o.id } });
     const body = await res.json();
@@ -43,24 +47,26 @@ describe("/api/orders/[id] PUT (tier change requires payment)", () => {
   });
 
   it("accepts tier change with correct paymentToken and updates price", async () => {
-    // User + order in FUTURE
-    const u = db.createUser({ name: "U", email: "u@test", passwordHash: "x", isMember: true }); // member
+    // Member user; create an order whose weight maps to the TARGET tier (LARGE)
+    const u = db.createUser({ name: "U", email: "u@test", passwordHash: "x", isMember: true });
     const futurePickup = isoLocalShort(2099, 1, 2, 9, 0);
+
+    // NOTE: weightKg = 16 -> LARGE; current tier SMALL forces a change on PUT.
     const o = db.createOrder({
       customerId: u.id,
       customerName: u.name,
       phone: "111",
       address: "Addr",
-      tier: "SMALL",         // 140 member
-      weightKg: 1,
+      tier: "SMALL",                 // current tier
+      weightKg: 16,                  // maps to LARGE (> 15)
       pickupSlot: futurePickup,
       deliverySlot: isoLocalShort(2099, 1, 2, 15, 0),
-      price: 140,
+      price: 140,                    // SMALL member price (seeded; not rechecked here)
       paid: true,
       status: "PLACED",
     });
 
-    // Need payment token for NEW tier price: LARGE (400 * 0.7) = 280
+    // Need payment token for NEW tier price: LARGE (400 * 0.7) = 280 (member)
     const payReq = new Request("http://local/api/payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

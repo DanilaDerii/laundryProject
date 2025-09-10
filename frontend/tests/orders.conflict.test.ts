@@ -12,8 +12,10 @@ describe("/api/orders POST (slot conflict)", () => {
   beforeEach(() => db.resetForTests());
 
   it("rejects when another order already occupies the same pickup slot", async () => {
-    // user + token
-    const user = db.createUser({ name: "U", email: "u@test", passwordHash: "x", isMember: false }); // non-member → MEDIUM 300
+    // Non-member → MEDIUM price = 300
+    const user = db.createUser({ name: "U", email: "u@test", passwordHash: "x", isMember: false });
+
+    // 1) token for first order
     const payReq1 = new Request("http://local/api/payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -23,10 +25,11 @@ describe("/api/orders POST (slot conflict)", () => {
     expect(payRes1.status).toBe(201);
     const { token: t1 } = await payRes1.json();
 
+    // Safe business window: Mon 2025-09-08, 09:00 → 15:45
     const pickup = isoLocalShort(2025, 9, 8, 9, 0);
-    const delivery = isoLocalShort(2025, 9, 8, 15, 0);
+    const delivery = isoLocalShort(2025, 9, 8, 15, 45);
 
-    // First order succeeds
+    // 2) First order should succeed (weight ↔ MEDIUM consistent: 10 kg)
     const orderReq1 = new Request("http://local/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -37,14 +40,16 @@ describe("/api/orders POST (slot conflict)", () => {
         pickupSlot: pickup,
         deliverySlot: delivery,
         tier: "MEDIUM",
-        weightKg: 3,
+        weightKg: 10,       // MEDIUM (5 < w <= 15)
         paymentToken: t1,
       }),
     });
     const orderRes1 = await ordersPOST(orderReq1);
+    const body1 = await orderRes1.json();
     expect(orderRes1.status).toBe(201);
+    expect(body1.ok).toBe(true);
 
-    // Second token for a second order (valid token)…
+    // 3) second token for second order
     const payReq2 = new Request("http://local/api/payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -54,18 +59,18 @@ describe("/api/orders POST (slot conflict)", () => {
     expect(payRes2.status).toBe(201);
     const { token: t2 } = await payRes2.json();
 
-    // …but tries to book the SAME slot → should fail 400 with reason "Slot already taken."
+    // 4) Try to book the SAME pickup slot → should fail with conflict (400)
     const orderReq2 = new Request("http://local/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         customerId: user.id,
-        phone: "111",
-        address: "Addr 1",
-        pickupSlot: pickup, // same slot
+        phone: "222",
+        address: "Addr 2",
+        pickupSlot: pickup, // same slot causes conflict
         deliverySlot: delivery,
         tier: "MEDIUM",
-        weightKg: 3,
+        weightKg: 10,
         paymentToken: t2,
       }),
     });
@@ -74,7 +79,7 @@ describe("/api/orders POST (slot conflict)", () => {
 
     expect(orderRes2.status).toBe(400);
     expect(body2).toMatchObject({ ok: false });
-    // Reason may be returned as `reason: "Slot already taken."`
+    // Some handlers return {reason:"Slot already taken.", suggestion:"..."}
     if ("reason" in body2) expect(body2.reason).toBe("Slot already taken.");
   });
 });

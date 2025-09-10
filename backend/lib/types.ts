@@ -96,6 +96,12 @@ export interface CreateOrderRequest {
   deliverySlot: ISODateTime;
   tier: Tier;
   weightKg?: number;
+
+  // --- NEW: pricing knobs (server-authoritative) ---
+  express?: boolean;      // +50 THB if true
+  distanceKm?: number;    // +0 / +20 / +40 bands (<=5 / <=15 / >15)
+  promoCode?: string;     // "PROMO10" => -10 THB flat
+
   paymentToken: PaymentToken; // required
 }
 export interface CreateOrderResponse {

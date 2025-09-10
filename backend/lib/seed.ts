@@ -29,8 +29,8 @@ export function seed(db = defaultDb) {
       demo = db.createUser({
         name: "Demo Customer",
         email,
-        passwordHash: "demo:hash", // placeholder
-        isMember: true,
+        passwordHash: "demo:hash", // placeholder only
+        isMember: true,            // <- membership lives on User
       });
     }
 
@@ -42,7 +42,7 @@ export function seed(db = defaultDb) {
 
       db.createOrder({
         customerId: demo.id,
-        customerName: demo.name, // backend will enforce consistency later
+        customerName: demo.name, // backend enforces consistency later
         phone: "+66-0000-0000",
         address: "123 Test Rd, Bangkok",
         pickupSlot: pickup,
