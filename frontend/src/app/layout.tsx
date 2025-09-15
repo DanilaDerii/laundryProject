@@ -8,16 +8,26 @@ export const metadata = {
   description: "Demo laundry ordering UI",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-gray-50 text-gray-900">
         <header className="border-b bg-white">
           <nav className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/ui/orders" className="font-semibold text-black">Laundry</Link>
-              <Link href="/ui/orders/new" className="hover:underline text-black">Create Order</Link>
-              <Link href="/ui/orders" className="hover:underline text-black">My Orders</Link>
+              <Link href="/ui/orders" className="font-semibold text-black">
+                Laundry
+              </Link>
+              <Link
+                href="/ui/orders/new"
+                className="hover:underline text-black"
+              >
+                Create Order
+              </Link>
             </div>
             <div className="flex items-center gap-3">
               <ClientUserBadge />

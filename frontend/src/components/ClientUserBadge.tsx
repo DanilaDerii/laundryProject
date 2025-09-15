@@ -2,7 +2,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getUser, clearUser, onSessionChange, type DemoUser } from "../lib/session";
+import {
+  getUser,
+  clearUser,
+  onSessionChange,
+  type DemoUser,
+} from "../lib/session";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -14,16 +19,25 @@ export default function ClientUserBadge() {
     setUserState(getUser());
     const unsub = onSessionChange((u) => {
       setUserState(u);
-      // router.refresh(); // not needed for client-only pages
     });
     return unsub;
-  }, [router]);
+  }, []);
 
   if (!user) {
     return (
       <div className="flex items-center gap-3">
-        <Link href="/ui/login" className="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-black">Login</Link>
-        <Link href="/ui/register" className="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-black">Register</Link>
+        <Link
+          href="/ui/login"
+          className="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-black"
+        >
+          Login
+        </Link>
+        <Link
+          href="/ui/register"
+          className="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-black"
+        >
+          Register
+        </Link>
       </div>
     );
   }
@@ -39,8 +53,8 @@ export default function ClientUserBadge() {
       <button
         onClick={() => {
           clearUser();
-          // Optional: kick to login after logout
-          // router.push("/ui/login");
+          router.refresh();
+          router.push("/ui/login");
         }}
         className="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-black"
       >

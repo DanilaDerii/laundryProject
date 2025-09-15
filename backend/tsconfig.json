@@ -6,10 +6,15 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+
+    "rootDir": "lib",
+    "outDir": "dist",
+
     "baseUrl": ".",
     "paths": {
       "@lib/*": ["lib/*"]
     },
+
     "types": ["node", "vitest"]
   },
   "include": ["lib", "tests"]

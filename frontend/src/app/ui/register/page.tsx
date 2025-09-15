@@ -11,7 +11,6 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [member, setMember] = useState(false);
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +22,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, member, password }),
+        body: JSON.stringify({ name, email, member }),
       });
 
       const data = await res.json();
@@ -34,7 +33,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Save locally (now includes id)
       setUser({ id: data.id, name: data.name, email: data.email, member: data.member });
       router.push("/ui/orders");
       router.refresh();
@@ -55,6 +53,7 @@ export default function RegisterPage() {
             className="w-full border rounded-md px-3 py-2"
             value={name}
             onChange={e => setName(e.target.value)}
+            required
           />
         </div>
         <div>
@@ -64,15 +63,7 @@ export default function RegisterPage() {
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Password (demo)</label>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+            required
           />
         </div>
         <label className="inline-flex items-center gap-2">
